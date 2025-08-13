@@ -13,7 +13,7 @@ O objetivo é permitir a pesquisa rápida de PIs pelo **número** (e futuramente
 │ ├── main.py # API FastAPI para consulta dos PIs \
 │ ├── database.py # Configuração do banco SQLite \
 │ ├── models.py # Modelos SQLAlchemy \
-│ ├── scripts/\ 
+│ ├── scripts/ \ 
 │ │ └── import_excel.py # Script para importar dados de planilhas Excel \
 │ ├── banco.db # Banco de dados SQLite com os PIs \
 │ └── requirements.txt # Dependências do backend \
