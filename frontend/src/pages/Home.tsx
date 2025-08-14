@@ -3,13 +3,11 @@ import Filters from "../components/Filters";
 import Pagination from "../components/Pagination";
 import LoadingSpinner from "../components/LoadingSpinner";
 import CardsGrid from "../components/CardsGrid";
+import Header from "../components/Header";
 import { buscarPIs } from "../services/api";
 import { BuscaParams, OrderBy, OrderDir, PICard } from "../types";
 import { DEFAULT_LIMIT } from "../config";
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore (instale se quiser CSV): npm i papaparse @types/papaparse
-import Papa from "papaparse";
+import * as XLSX from "xlsx";
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
@@ -76,19 +74,46 @@ export default function Home() {
     }));
   }
 
-  function exportarCSV() {
-    if (!rows.length) return alert("Nada para exportar.");
-    if (!Papa?.unparse)
-      return alert("Papaparse não instalado. Rode: npm i papaparse @types/papaparse");
-    const csv = Papa.unparse(rows as any);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `pis_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  // ---------- EXPORTAÇÃO XLSX (página atual) ----------
+  function exportarXLSX() {
+    if (!rows.length) {
+      alert("Nada para exportar.");
+      return;
+    }
+
+    const data = rows.map((r) => ({
+      ID: r.id,
+      PI: r.numero_pi ?? "",
+      "PI Matriz": r.pi_matriz ?? "",
+      Anunciante: r.nome_anunciante ?? "",
+      "CNPJ Anunciante": r.cnpj_anunciante ?? "",
+      Executivo: r.executivo ?? "",
+      Diretoria: r.diretoria ?? "",
+      Campanha: r.nome_campanha ?? "",
+      Agência: r.nome_agencia ?? "",
+      "Mês da venda": r.mes_da_venda ?? "",
+      "Valor bruto": r.valor_bruto ?? "",
+      "Valor líquido": r.valor_liquido ?? "",
+      "Início veic.": r.data_inicial_veiculacao ?? "",
+      "Fim veic.": r.data_final_veiculacao ?? "",
+      "Data da venda": r.data_da_venda ?? "",
+      Vencimento: r.vencimento ?? "",
+      Canal: r.canal ?? "",
+      Produto: r.produto ?? "",
+      "Data Pulsar": r.data_pulsar ?? "",
+      "Data Pagamento": r.data_pagamento ?? "",
+      NF: r.nota_fiscal ?? "",
+      Observações: r.observacoes ?? "",
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "PIs");
+
+    const today = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `pis_${today}.xlsx`);
   }
+  // ----------------------------------------------------
 
   // callback chamado pelo CardsGrid após PATCH /pi/{id}
   function onRowUpdated(updated: PICard) {
@@ -96,74 +121,83 @@ export default function Home() {
   }
 
   const canPrev = (query.offset ?? 0) > 0;
-  const canNext = rows.length >= (query.limit ?? DEFAULT_LIMIT); // se veio exatamente 'limit', pode ter próxima
+  const canNext = rows.length >= (query.limit ?? DEFAULT_LIMIT);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold">🔎 Sistema de Busca de PI</h1>
-        <p className="text-slate-400">React + TS + Tailwind — integrado ao seu FastAPI</p>
-      </header>
+    <div className="w-full min-h-screen bg-black text-slate-100">
+      {/* Header global (agora maior) */}
+      <Header
+        title="🔎 Sistema de Busca de PI"
+    
+      />
 
-      <Filters onSearch={handleSearch} defaultLimit={DEFAULT_LIMIT} />
+      {/* Conteúdo principal */}
+      <main className="px-4 sm:px-6 py-6 max-w-7xl mx-auto">
+        {/* MAIS espaço antes do filtro: mt-12 em telas pequenas e mt-16 em >=sm */}
+        <div className="mt-12 sm:mt-16">
+          <Filters onSearch={handleSearch} defaultLimit={DEFAULT_LIMIT} />
+        </div>
 
-      <div className="my-4 flex items-center gap-3">
-        {/* Ordenação rápida (opcional): clique para alternar ASC/DESC */}
-        <div className="flex items-center gap-2 text-sm text-slate-400">
-          <span>Ordenar por:</span>
-          <select
-            className="rounded-md bg-slate-800 border border-slate-700 px-2 py-1 text-slate-200"
-            value={query.order_by ?? "data_da_venda"}
-            onChange={(e) => handleSort(e.target.value as OrderBy)}
-          >
-            <option value="data_da_venda">Data da venda</option>
-            <option value="numero_pi">PI</option>
-            <option value="valor_bruto">Valor bruto</option>
-            <option value="valor_liquido">Valor líquido</option>
-            <option value="nome_anunciante">Anunciante</option>
-            <option value="executivo">Executivo</option>
-            <option value="diretoria">Diretoria</option>
-            <option value="canal">Canal</option>
-            <option value="produto">Produto</option>
-          </select>
+        {/* Toolbar: ordenação à esquerda, export à direita */}
+        <div className="my-6 flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-slate-300">
+            <span>Ordenar por:</span>
+            <select
+              className="rounded-md bg-slate-900 border border-slate-800 px-2 py-1 text-slate-200"
+              value={query.order_by ?? "data_da_venda"}
+              onChange={(e) => handleSort(e.target.value as OrderBy)}
+            >
+              <option value="data_da_venda">Data da venda</option>
+              <option value="numero_pi">PI</option>
+              <option value="valor_bruto">Valor bruto</option>
+              <option value="valor_liquido">Valor líquido</option>
+              <option value="nome_anunciante">Anunciante</option>
+              <option value="executivo">Executivo</option>
+              <option value="diretoria">Diretoria</option>
+              <option value="canal">Canal</option>
+              <option value="produto">Produto</option>
+            </select>
+            <button
+              onClick={() =>
+                setQuery((q) => ({
+                  ...q,
+                  order_dir: q.order_dir === "asc" ? "desc" : "asc",
+                  offset: 0,
+                }))
+              }
+              className="rounded-md bg-slate-900 border border-slate-800 px-2 py-1 text-slate-200"
+            >
+              {query.order_dir === "asc" ? "ASC ▲" : "DESC ▼"}
+            </button>
+          </div>
+
+          {/* Export agora na página (lado direito) */}
           <button
-            onClick={() =>
-              setQuery((q) => ({
-                ...q,
-                order_dir: q.order_dir === "asc" ? "desc" : "asc",
-                offset: 0,
-              }))
-            }
-            className="rounded-md bg-slate-800 border border-slate-700 px-2 py-1 text-slate-200"
+            onClick={exportarXLSX}
+            className="ml-auto rounded-xl px-4 py-2 font-medium text-white bg-red-700 hover:bg-red-600"
           >
-            {query.order_dir === "asc" ? "ASC ▲" : "DESC ▼"}
+            Exportar XLSX (página atual)
           </button>
         </div>
 
-        <button
-          onClick={exportarCSV}
-          className="ml-auto rounded-xl px-4 py-2 font-medium text-white bg-slate-700 hover:bg-slate-600"
-        >
-          Exportar CSV (página atual)
-        </button>
-      </div>
+        {loading ? (
+          <LoadingSpinner />
+        ) : (
+          <>
+            <CardsGrid rows={rows} onRowUpdated={onRowUpdated} />
 
-      {loading ? (
-        <LoadingSpinner />
-      ) : (
-        <>
-          {/* Cards (sem tabela) com observações em destaque e edição inline */}
-          <CardsGrid rows={rows} onRowUpdated={onRowUpdated} />
-
-          <Pagination
-            page={page}
-            canPrev={canPrev}
-            canNext={canNext}
-            onPrev={prevPage}
-            onNext={nextPage}
-          />
-        </>
-      )}
+            <div className="mt-6">
+              <Pagination
+                page={page}
+                canPrev={canPrev}
+                canNext={canNext}
+                onPrev={prevPage}
+                onNext={nextPage}
+              />
+            </div>
+          </>
+        )}
+      </main>
     </div>
   );
 }

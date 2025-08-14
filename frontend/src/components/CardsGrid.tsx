@@ -11,14 +11,15 @@ export default function CardsGrid({
 }) {
   if (!rows.length) {
     return (
-      <div className="rounded-xl border border-slate-700 p-6 text-slate-300">
+      <div className="rounded-2xl border border-red-700/50 bg-black p-10 text-red-200 text-2xl text-center font-black tracking-wide">
         Sem resultados.
       </div>
     );
   }
 
+  // UM POR TELA, CENTRALIZADO (um card por vez)
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="flex flex-col items-center gap-16">
       {rows.map((r) => (
         <PIItem key={r.id} row={r} onRowUpdated={onRowUpdated} />
       ))}
@@ -26,7 +27,13 @@ export default function CardsGrid({
   );
 }
 
-function PIItem({ row, onRowUpdated }: { row: PICard; onRowUpdated: (u: PICard) => void }) {
+function PIItem({
+  row,
+  onRowUpdated,
+}: {
+  row: PICard;
+  onRowUpdated: (u: PICard) => void;
+}) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<{
     data_pulsar?: string | null;
@@ -54,129 +61,286 @@ function PIItem({ row, onRowUpdated }: { row: PICard; onRowUpdated: (u: PICard) 
     }
   }
 
+  const tipoPI = getTipoPI(row);
+  const numeroMatriz = row.pi_matriz ?? null;
+
   return (
-    <div className="rounded-2xl border border-slate-700 bg-slate-800 p-4 shadow-sm">
-      {/* Cabeçalho */}
-      <div className="mb-3 flex items-start justify-between gap-3 border-b border-slate-700 pb-3">
-        <div>
-          <div className="text-xs uppercase tracking-wide text-slate-400">PI</div>
-          <div className="text-lg font-semibold text-white">{row.numero_pi ?? "-"}</div>
-          {row.pi_matriz && (
-            <div className="text-xs text-slate-400">PI Matriz: {row.pi_matriz}</div>
-          )}
-        </div>
-        <div className="text-right">
-          <div className="text-xs uppercase tracking-wide text-slate-400">Anunciante</div>
-          <div className="text-sm font-medium text-slate-200">
-            {row.nome_anunciante ?? "-"}
+    <section
+      className="
+        w-full max-w-6xl mx-auto
+        rounded-[28px] relative
+        p-[1px]
+        [background:linear-gradient(#0b0b0b,#0b0b0b)_padding-box,linear-gradient(135deg,rgba(255,80,80,.6),rgba(255,0,0,.35))_border-box]
+        shadow-[0_10px_60px_-20px_rgba(255,0,0,0.45),0_0_0_1px_rgba(255,0,0,0.15)]
+      "
+    >
+      <div className="rounded-[26px] bg-gradient-to-b from-[#130A0A] to-[#0B0505] text-red-50 px-8 py-10 sm:px-12 sm:py-14 md:px-16 md:py-16 backdrop-blur">
+        {/* Cabeçalho LIMPO com faixa vermelha */}
+        <header className="mb-10 flex flex-col gap-7 sm:flex-row sm:items-end sm:justify-between border-b border-red-800/50 pb-8">
+          <div className="space-y-4">
+            <div className="text-[11px] md:text-xs font-black uppercase tracking-[0.28em] text-red-200/75">
+              PI
+            </div>
+            <div>
+              <h2 className="text-5xl md:text-6xl font-black leading-[1.05] tracking-tight drop-shadow-sm">
+                {row.numero_pi ?? "-"}
+              </h2>
+              {/* Barrinha vermelha decorativa */}
+              <div className="mt-3 h-1.5 w-40 rounded-full bg-gradient-to-r from-red-500 via-red-400 to-red-600 shadow-[0_0_18px_rgba(255,0,0,0.55)]" />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5">
+              {row.canal && (
+                <Chip title="Canal" large>
+                  {row.canal}
+                </Chip>
+              )}
+              {row.produto && (
+                <Chip title="Produto" large>
+                  {row.produto}
+                </Chip>
+              )}
+            </div>
           </div>
-          {row.cnpj_anunciante && (
-            <div className="text-xs text-slate-400">{row.cnpj_anunciante}</div>
-          )}
-        </div>
-      </div>
 
-      {/* Blocos rápidos */}
-      <div className="mb-3 grid grid-cols-2 gap-3 text-sm">
-        <Info label="Executivo" value={row.executivo} />
-        <Info label="Diretoria" value={row.diretoria} />
-        <Info label="Campanha" value={row.nome_campanha} />
-        <Info label="Agência" value={row.nome_agencia} />
-        <Info label="Mês da venda" value={row.mes_da_venda} />
-        <Info label="Venda" value={row.data_da_venda} />
-        <Info label="Vencimento" value={row.vencimento} />
-        <Info label="Valor bruto" value={fmtBRL(row.valor_bruto)} />
-        <Info label="Valor líquido" value={fmtBRL(row.valor_liquido)} />
-      </div>
+          <div className="text-left sm:text-right space-y-2">
+            <div className="text-[11px] md:text-xs font-black uppercase tracking-[0.28em] text-red-200/75">
+              Anunciante
+            </div>
+            <div className="text-3xl md:text-4xl font-black">{row.nome_anunciante ?? "-"}</div>
+            <div className="text-base md:text-lg font-bold text-red-200/90">
+              {row.cnpj_anunciante || "—"}
+            </div>
+          </div>
+        </header>
 
-      {/* Observações em destaque */}
-      <div
-        className={`mb-4 rounded-xl border p-3 text-sm ${
-          row.observacoes
-            ? "border-amber-300/40 bg-amber-50/10"
-            : "border-slate-700 bg-slate-800/60"
-        }`}
-      >
-        <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-amber-300">
-          Observações
-        </div>
-        <div className={`whitespace-pre-wrap ${row.observacoes ? "text-amber-100" : "text-slate-400"}`}>
-          {row.observacoes || "Sem observações"}
-        </div>
-      </div>
+        {/* ======= Seções separadas ======= */}
 
-      {/* Campos financeiros editáveis */}
-      <div className="rounded-xl bg-slate-900/40 p-3">
-        <div className="mb-2 flex items-center justify-between">
-          <div className="text-sm font-medium text-slate-200">Financeiro</div>
+        {/* Identificação */}
+        <Section title="Identificação do PI">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <Info label="Tipo do PI" value={tipoPI} highlight />
+            <Info label="PI Matriz" value={numeroMatriz ?? "—"} />
+            <Info label="Campanha" value={row.nome_campanha} />
+            <Info label="Executivo" value={row.executivo} />
+            <Info label="Diretoria" value={row.diretoria} />
+            <Info label="Canal" value={row.canal} />
+            <Info label="Produto" value={row.produto} />
+          </div>
+        </Section>
+
+        {/* Entidades */}
+        <Section title="Agência e Cliente">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <Info label="Agência" value={row.nome_agencia} />
+            <Info label="Razão Social Agência" value={row.razao_social_agencia} />
+            <Info label="CNPJ Agência" value={row.cnpj_agencia} />
+            <Info label="UF Cliente" value={row.uf_cliente} />
+            <Info label="UF Agência" value={row.uf_agencia} />
+            <Info label="Perfil" value={row.perfil_anunciante} />
+            <Info label="Subperfil" value={row.subperfil_anunciante} />
+          </div>
+        </Section>
+
+        {/* Datas e Valores */}
+        <Section title="Datas e Valores">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Se vier “2024-12-01 00:00:00”, mostramos 12/2024 */}
+            <Info
+              label="Mês da venda"
+              value={
+                row.mes_da_venda
+                  ? fmtDateMesAno(row.mes_da_venda)
+                  : fmtDateMesAno(row.data_da_venda)
+              }
+            />
+            <Info label="Venda" value={fmtDateBR(row.data_da_venda)} highlight />
+            <Info label="Vencimento" value={fmtDateBR(row.vencimento)} highlight />
+            <Info label="Início veiculação" value={fmtDateBR(row.data_inicial_veiculacao)} />
+            <Info label="Fim veiculação" value={fmtDateBR(row.data_final_veiculacao)} />
+            <Info label="Valor bruto" value={fmtBRL(row.valor_bruto)} money big />
+            <Info label="Valor líquido" value={fmtBRL(row.valor_liquido)} money big />
+          </div>
+        </Section>
+
+        {/* Observações */}
+        <Section title="Observações" variant="warning">
+          <div
+            className={`whitespace-pre-wrap text-[1.1rem] leading-relaxed ${
+              row.observacoes ? "text-yellow-100 font-black" : "text-red-200/80 font-bold"
+            }`}
+          >
+            {row.observacoes || "Sem observações"}
+          </div>
+        </Section>
+
+        {/* Financeiro (editável) */}
+        <Section title="Preenchimento do Financeiro" tightHeader>
+          <div className="mb-6">
+            {!editing ? (
+              <button
+                onClick={() => setEditing(true)}
+                className="inline-flex items-center justify-center rounded-2xl border border-red-700 bg-black/60 px-8 py-3 text-base font-black text-red-200 hover:bg-red-950/60 hover:text-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 transition"
+              >
+                Editar
+              </button>
+            ) : (
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={salvar}
+                  className="rounded-2xl bg-red-600 px-8 py-3 text-base font-black text-white hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 transition shadow-[0_10px_30px_-10px_rgba(255,0,0,0.45)]"
+                >
+                  Salvar
+                </button>
+                <button
+                  onClick={() => {
+                    setEditing(false);
+                    setForm({
+                      data_pulsar: row.data_pulsar ?? "",
+                      data_pagamento: row.data_pagamento ?? "",
+                      nota_fiscal: row.nota_fiscal ?? "",
+                    });
+                  }}
+                  className="rounded-2xl border border-red-800 bg-black px-8 py-3 text-base font-black text-red-100 hover:bg-red-950 focus:outline-none focus:ring-2 focus:ring-red-600"
+                >
+                  Cancelar
+                </button>
+              </div>
+            )}
+          </div>
+
           {!editing ? (
-            <button
-              onClick={() => setEditing(true)}
-              className="rounded-lg bg-slate-700 px-3 py-1 text-sm text-white hover:bg-slate-600"
-            >
-              Editar
-            </button>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-7 text-xl">
+              <Info label="Data Pulsar" value={fmtDateBR(row.data_pulsar)} highlight />
+              <Info label="Data Pagamento" value={fmtDateBR(row.data_pagamento)} highlight />
+              <Info label="NF" value={row.nota_fiscal} highlight />
+            </div>
           ) : (
-            <div className="flex gap-2">
-              <button
-                onClick={salvar}
-                className="rounded-lg bg-emerald-600 px-3 py-1 text-sm text-white hover:bg-emerald-500"
-              >
-                Salvar
-              </button>
-              <button
-                onClick={() => {
-                  setEditing(false);
-                  setForm({
-                    data_pulsar: row.data_pulsar ?? "",
-                    data_pagamento: row.data_pagamento ?? "",
-                    nota_fiscal: row.nota_fiscal ?? "",
-                  });
-                }}
-                className="rounded-lg bg-slate-700 px-3 py-1 text-sm text-white hover:bg-slate-600"
-              >
-                Cancelar
-              </button>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-7">
+              <FieldDate
+                label="Data Pulsar"
+                value={form.data_pulsar ?? ""}
+                onChange={(v) => setForm((f) => ({ ...f, data_pulsar: v }))}
+              />
+              <FieldDate
+                label="Data Pagamento"
+                value={form.data_pagamento ?? ""}
+                onChange={(v) => setForm((f) => ({ ...f, data_pagamento: v }))}
+              />
+              <FieldText
+                label="Nota Fiscal"
+                value={form.nota_fiscal ?? ""}
+                onChange={(v) => setForm((f) => ({ ...f, nota_fiscal: v }))}
+                placeholder="Ex.: 12345"
+              />
             </div>
           )}
-        </div>
+        </Section>
+      </div>
+    </section>
+  );
+}
 
-        {!editing ? (
-          <div className="grid grid-cols-3 gap-3 text-sm">
-            <Info label="Data Pulsar" value={row.data_pulsar} />
-            <Info label="Data Pagamento" value={row.data_pagamento} />
-            <Info label="NF" value={row.nota_fiscal} />
+/* ===================== Subcomponentes ===================== */
+
+function Section({
+  title,
+  children,
+  variant,
+  tightHeader,
+}: {
+  title: string;
+  children: React.ReactNode;
+  variant?: "default" | "warning";
+  tightHeader?: boolean;
+}) {
+  const isWarn = variant === "warning";
+  return (
+    <div
+      className={[
+        "mb-9 rounded-2xl p-[1px]",
+        isWarn
+          ? "[background:linear-gradient(#000,#000)_padding-box,linear-gradient(90deg,rgba(255,212,121,.9),rgba(255,212,121,.35))_border-box]"
+          : "[background:linear-gradient(#0c0c0c,#0c0c0c)_padding-box,linear-gradient(120deg,rgba(255,0,0,.55),rgba(255,80,80,.4))_border-box]",
+      ].join(" ")}
+    >
+      <div
+        className={[
+          "rounded-[18px] border border-transparent",
+          isWarn ? "bg-black/30" : "bg-black/45",
+          "px-5 md:px-6 py-6 md:py-7 backdrop-blur-sm",
+        ].join(" ")}
+      >
+        <div className={["flex items-center justify-between", tightHeader ? "mb-4" : "mb-6"].join(" ")}>
+          <div className="text-xl md:text-2xl font-black tracking-wide">
+            {/* Ponto vermelho antes do título */}
+            <span className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-gradient-to-r from-red-500 to-red-600 shadow-[0_0_12px_rgba(255,0,0,0.6)] align-middle" />
+            {title}
           </div>
-        ) : (
-          <div className="grid grid-cols-3 gap-3">
-            <FieldDate
-              label="Data Pulsar"
-              value={form.data_pulsar ?? ""}
-              onChange={(v) => setForm((f) => ({ ...f, data_pulsar: v }))}
-            />
-            <FieldDate
-              label="Data Pagamento"
-              value={form.data_pagamento ?? ""}
-              onChange={(v) => setForm((f) => ({ ...f, data_pagamento: v }))}
-            />
-            <FieldText
-              label="Nota Fiscal"
-              value={form.nota_fiscal ?? ""}
-              onChange={(v) => setForm((f) => ({ ...f, nota_fiscal: v }))}
-              placeholder="Ex.: 12345"
-            />
-          </div>
-        )}
+        </div>
+        {children}
       </div>
     </div>
   );
 }
 
-function Info({ label, value }: { label: string; value?: string | null }) {
+function Chip({
+  children,
+  title,
+  large,
+}: {
+  children: React.ReactNode;
+  title?: string;
+  large?: boolean;
+}) {
   return (
-    <div>
-      <div className="text-[10px] uppercase tracking-wide text-slate-400">{label}</div>
-      <div className="truncate text-slate-200">{value ?? "-"}</div>
+    <span
+      title={title}
+      className={[
+        "inline-flex items-center gap-1 rounded-full",
+        "border border-red-700/60",
+        "bg-[linear-gradient(180deg,rgba(35,15,15,.9),rgba(15,5,5,.92))]",
+        "text-red-200",
+        "shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]",
+        large ? "px-3.5 py-1.5 text-sm font-black" : "px-3 py-1 text-xs font-extrabold",
+      ].join(" ")}
+    >
+      {children}
+    </span>
+  );
+}
+
+function Info({
+  label,
+  value,
+  money,
+  highlight,
+  big,
+  xl,
+}: {
+  label: string;
+  value?: string | null;
+  money?: boolean;
+  highlight?: boolean;
+  big?: boolean;
+  xl?: boolean;
+}) {
+  return (
+    <div className="flex flex-col">
+      <span className="text-[11px] md:text-[12px] uppercase tracking-[0.22em] text-red-200/90 font-black">
+        {label}
+      </span>
+      <span
+        className={[
+          "truncate",
+          money ? "text-yellow-300" : highlight ? "text-red-100" : "text-white",
+          money || highlight ? "font-black" : "font-extrabold",
+          big ? "text-[26px] leading-[2.1rem]" : xl ? "text-[22px] leading-9" : "text-[20px] leading-8",
+        ].join(" ")}
+        title={value ?? "-"}
+      >
+        {value ?? "-"}
+      </span>
     </div>
   );
 }
@@ -191,13 +355,19 @@ function FieldDate({
   onChange: (v: string) => void;
 }) {
   return (
-    <label className="flex flex-col gap-1">
-      <span className="text-xs text-slate-300">{label}</span>
+    <label className="flex flex-col gap-2">
+      <span className="text-base md:text-lg font-black text-red-200">{label}</span>
       <input
         type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-lg border border-slate-700 bg-slate-900/60 px-2 py-1 text-slate-100 outline-none focus:ring-2 focus:ring-emerald-600"
+        className="
+          rounded-2xl border border-red-800/60
+          bg-[linear-gradient(180deg,rgba(25,25,25,.9),rgba(10,10,10,.9))]
+          px-4 py-3 text-red-100 outline-none
+          focus:ring-2 focus:ring-red-600 font-black text-lg
+          shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]
+        "
       />
     </label>
   );
@@ -215,27 +385,107 @@ function FieldText({
   placeholder?: string;
 }) {
   return (
-    <label className="flex flex-col gap-1">
-      <span className="text-xs text-slate-300">{label}</span>
+    <label className="flex flex-col gap-2">
+      <span className="text-base md:text-lg font-black text-red-200">{label}</span>
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="rounded-lg border border-slate-700 bg-slate-900/60 px-2 py-1 text-slate-100 outline-none focus:ring-2 focus:ring-emerald-600"
+        className="
+          rounded-2xl border border-red-800/60
+          bg-[linear-gradient(180deg,rgba(25,25,25,.9),rgba(10,10,10,.9))]
+          px-4 py-3 text-red-100 outline-none
+          focus:ring-2 focus:ring-red-600 font-black text-lg
+          shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]
+        "
       />
     </label>
   );
 }
 
+/* ===================== Utils ===================== */
+
 function fmtBRL(v: unknown) {
   if (v === null || v === undefined || v === "") return "-";
   const n = Number(v);
   return Number.isFinite(n)
-    ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n)
+    ? new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      }).format(n)
     : String(v);
+}
+
+function fmtDateBR(v?: string | null): string {
+  if (!v) return "-";
+  const s = String(v).trim();
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+
+  const iso = s.split("T")[0].split(" ")[0];
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (m) {
+    const [, yyyy, mm, dd] = m;
+    return `${dd}/${mm}/${yyyy}`;
+  }
+
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) {
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  }
+
+  return s;
+}
+
+/** Exibe somente mm/aaaa (para casos como "2024-12-01 00:00:00" ou ISO em geral) */
+function fmtDateMesAno(v?: string | null): string {
+  if (!v) return "-";
+  const s = String(v).trim();
+
+  if (/^\d{2}\/\d{4}$/.test(s)) return s;
+
+  const iso = s.split("T")[0].split(" ")[0];
+
+  let m = /^(\d{4})-(\d{2})$/.exec(iso);
+  if (m) {
+    const [, yyyy, mm] = m;
+    return `${mm}/${yyyy}`;
+  }
+  m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (m) {
+    const [, yyyy, mm] = m;
+    return `${mm}/${yyyy}`;
+  }
+
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) {
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    return `${mm}/${yyyy}`;
+  }
+
+  return s;
 }
 
 function nz(v?: string | null) {
   return v && v.trim() !== "" ? v : null;
+}
+
+function getTipoPI(row: any): string {
+  if (typeof row.eh_matriz === "boolean") {
+    if (row.eh_matriz) return "Matriz";
+    if (row.pi_matriz) return "CS/Vinculado";
+    return "Normal/Independente";
+  }
+  if (typeof row.tipo_pi === "string" && row.tipo_pi.trim() !== "") {
+    const t = row.tipo_pi.toLowerCase();
+    if (["matriz"].includes(t)) return "Matriz";
+    if (["cs", "vinculado", "vinculada"].includes(t)) return "CS/Vinculado";
+    if (["normal", "independente"].includes(t)) return "Normal/Independente";
+  }
+  if (row.pi_matriz) return "CS/Vinculado";
+  return "Normal/Independente";
 }
