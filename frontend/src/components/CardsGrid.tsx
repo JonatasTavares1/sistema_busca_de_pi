@@ -173,7 +173,7 @@ function PIItem({
         </Section>
 
         {/* Financeiro (editável) */}
-        <Section title="Preenchimento do Financeiro" tightHeader>
+        <Section title="Preenchimento do Financeiro" tightHeader titleSize="2xl">
           <div className="mb-6">
             {!editing ? (
               <button
@@ -208,12 +208,12 @@ function PIItem({
           </div>
 
           {!editing ? (
-            // NF em destaque + datas logo abaixo (maiores)
+            // NF mega + datas em negrito e maiores
             <div className="grid grid-cols-1 gap-8">
               <NFHighlight value={row.nota_fiscal} />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-7">
-                <Info label="Data Pulsar" value={fmtDateBR(row.data_pulsar)} highlight xl />
-                <Info label="Data Pagamento" value={fmtDateBR(row.data_pagamento)} highlight xl />
+                <Info label="Data Pulsar" value={fmtDateBR(row.data_pulsar)} highlight xxl />
+                <Info label="Data Pagamento" value={fmtDateBR(row.data_pagamento)} highlight xxl />
               </div>
             </div>
           ) : (
@@ -275,9 +275,10 @@ function NFHighlight({ value }: { value?: string | null }) {
         <div
           className={[
             "truncate tabular-nums font-mono",
-            has ? "text-red-100" : "text-red-300/70",
+            has ? "text-red-50" : "text-red-300/70",
             "font-black",
-            "text-[32px] leading-8 md:text-[36px] md:leading-[2.3rem] tracking-wide",
+            // forte: base 40px, md 52px
+            "text-[40px] leading-[2.4rem] md:text-[52px] md:leading-[3rem] tracking-wide",
           ].join(" ")}
           title={has ? value! : "Sem NF"}
         >
@@ -286,7 +287,7 @@ function NFHighlight({ value }: { value?: string | null }) {
         <button
           onClick={copy}
           disabled={!has}
-          className="rounded-xl border border-red-700 bg-black/60 px-5 py-2.5 text-base font-extrabold text-red-100 hover:bg-red-950 disabled:opacity-50"
+          className="rounded-xl border border-red-700 bg-black/60 px-6 py-3 text-lg font-extrabold text-red-100 hover:bg-red-950 disabled:opacity-50"
         >
           {copied ? "Copiado!" : "Copiar"}
         </button>
@@ -300,13 +301,29 @@ function Section({
   children,
   variant,
   tightHeader,
+  titleSize = "md",
+  titleClassName = "",
 }: {
   title: string;
   children: React.ReactNode;
   variant?: "default" | "warning";
   tightHeader?: boolean;
+  /** md = padrão; lg/xl/2xl deixam o título maior */
+  titleSize?: "md" | "lg" | "xl" | "2xl";
+  /** classes extras opcionais para o título */
+  titleClassName?: string;
 }) {
   const isWarn = variant === "warning";
+
+  const sizeCls =
+    titleSize === "2xl"
+      ? "text-4xl md:text-5xl"
+      : titleSize === "xl"
+      ? "text-3xl md:text-4xl"
+      : titleSize === "lg"
+      ? "text-2xl md:text-3xl"
+      : "text-xl md:text-2xl"; // md (default)
+
   return (
     <div
       className={[
@@ -324,7 +341,7 @@ function Section({
         ].join(" ")}
       >
         <div className={["flex items-center justify-between", tightHeader ? "mb-4" : "mb-6"].join(" ")}>
-          <div className="text-xl md:text-2xl font-black tracking-wide">
+          <div className={[sizeCls, "font-black tracking-wide", titleClassName].join(" ")}>
             <span className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-gradient-to-r from-red-500 to-red-600 shadow-[0_0_12px_rgba(255,0,0,0.6)] align-middle" />
             {title}
           </div>
@@ -368,6 +385,7 @@ function Info({
   highlight,
   big,
   xl,
+  xxl,
 }: {
   label: string;
   value?: string | null;
@@ -375,6 +393,7 @@ function Info({
   highlight?: boolean;
   big?: boolean;
   xl?: boolean;
+  xxl?: boolean; // tamanho extra (datas do financeiro)
 }) {
   return (
     <div className="flex flex-col">
@@ -384,9 +403,15 @@ function Info({
       <span
         className={[
           "truncate",
-          money ? "text-yellow-300" : highlight ? "text-red-100" : "text-white",
-          money || highlight ? "font-black" : "font-extrabold",
-          big ? "text-[26px] leading-[2.1rem]" : xl ? "text-[22px] leading-9" : "text-[20px] leading-8",
+          money ? "text-yellow-300" : highlight ? "text-red-50" : "text-white",
+          "font-black",
+          xxl
+            ? "text-[30px] leading-[2.2rem] md:text-[36px] md:leading-[2.5rem]"
+            : big
+            ? "text-[26px] leading-[2.1rem]"
+            : xl
+            ? "text-[22px] leading-9"
+            : "text-[20px] leading-8",
         ].join(" ")}
         title={value ?? "-"}
       >
