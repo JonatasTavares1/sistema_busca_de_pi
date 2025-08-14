@@ -17,7 +17,6 @@ export default function CardsGrid({
     );
   }
 
-  // UM POR TELA, CENTRALIZADO (um card por vez)
   return (
     <div className="flex flex-col items-center gap-16">
       {rows.map((r) => (
@@ -145,7 +144,6 @@ function PIItem({
         {/* Datas e Valores */}
         <Section title="Datas e Valores">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Se vier “2024-12-01 00:00:00”, mostramos 12/2024 */}
             <Info
               label="Mês da venda"
               value={
@@ -210,13 +208,22 @@ function PIItem({
           </div>
 
           {!editing ? (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-7 text-xl">
-              <Info label="Data Pulsar" value={fmtDateBR(row.data_pulsar)} highlight />
-              <Info label="Data Pagamento" value={fmtDateBR(row.data_pagamento)} highlight />
-              <Info label="NF" value={row.nota_fiscal} highlight />
+            // NF em destaque + datas logo abaixo (maiores)
+            <div className="grid grid-cols-1 gap-8">
+              <NFHighlight value={row.nota_fiscal} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-7">
+                <Info label="Data Pulsar" value={fmtDateBR(row.data_pulsar)} highlight xl />
+                <Info label="Data Pagamento" value={fmtDateBR(row.data_pagamento)} highlight xl />
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-7">
+              <FieldText
+                label="Nota Fiscal"
+                value={form.nota_fiscal ?? ""}
+                onChange={(v) => setForm((f) => ({ ...f, nota_fiscal: v }))}
+                placeholder="Ex.: 12345"
+              />
               <FieldDate
                 label="Data Pulsar"
                 value={form.data_pulsar ?? ""}
@@ -227,12 +234,6 @@ function PIItem({
                 value={form.data_pagamento ?? ""}
                 onChange={(v) => setForm((f) => ({ ...f, data_pagamento: v }))}
               />
-              <FieldText
-                label="Nota Fiscal"
-                value={form.nota_fiscal ?? ""}
-                onChange={(v) => setForm((f) => ({ ...f, nota_fiscal: v }))}
-                placeholder="Ex.: 12345"
-              />
             </div>
           )}
         </Section>
@@ -242,6 +243,57 @@ function PIItem({
 }
 
 /* ===================== Subcomponentes ===================== */
+
+function NFHighlight({ value }: { value?: string | null }) {
+  const [copied, setCopied] = useState(false);
+  const has = !!(value && value.trim());
+
+  async function copy() {
+    if (!has) return;
+    try {
+      await navigator.clipboard.writeText(value!);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch {
+      // ignore
+    }
+  }
+
+  return (
+    <div
+      className={[
+        "rounded-2xl p-6 md:p-7 border",
+        has
+          ? "border-red-500/70 bg-gradient-to-br from-red-900/40 to-red-950/40"
+          : "border-red-800/60 bg-black/40",
+      ].join(" ")}
+    >
+      <div className="mb-2 text-[13px] md:text-[14px] uppercase tracking-[0.24em] text-red-200/90 font-black">
+        NF
+      </div>
+      <div className="flex items-center justify-between gap-4">
+        <div
+          className={[
+            "truncate tabular-nums font-mono",
+            has ? "text-red-100" : "text-red-300/70",
+            "font-black",
+            "text-[32px] leading-8 md:text-[36px] md:leading-[2.3rem] tracking-wide",
+          ].join(" ")}
+          title={has ? value! : "Sem NF"}
+        >
+          {has ? value : "—"}
+        </div>
+        <button
+          onClick={copy}
+          disabled={!has}
+          className="rounded-xl border border-red-700 bg-black/60 px-5 py-2.5 text-base font-extrabold text-red-100 hover:bg-red-950 disabled:opacity-50"
+        >
+          {copied ? "Copiado!" : "Copiar"}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function Section({
   title,
@@ -273,7 +325,6 @@ function Section({
       >
         <div className={["flex items-center justify-between", tightHeader ? "mb-4" : "mb-6"].join(" ")}>
           <div className="text-xl md:text-2xl font-black tracking-wide">
-            {/* Ponto vermelho antes do título */}
             <span className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-gradient-to-r from-red-500 to-red-600 shadow-[0_0_12px_rgba(255,0,0,0.6)] align-middle" />
             {title}
           </div>
