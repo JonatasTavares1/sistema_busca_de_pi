@@ -218,16 +218,16 @@ function PIItem({
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-7">
+              <FieldDate
+                label="Data Pulsar"
+                value={form.data_pulsar ?? ""}
+                onChange={(v) => setForm((f) => ({ ...f, data_pulsar: v }))}
+              />
               <FieldText
                 label="Nota Fiscal"
                 value={form.nota_fiscal ?? ""}
                 onChange={(v) => setForm((f) => ({ ...f, nota_fiscal: v }))}
                 placeholder="Ex.: 12345"
-              />
-              <FieldDate
-                label="Data Pulsar"
-                value={form.data_pulsar ?? ""}
-                onChange={(v) => setForm((f) => ({ ...f, data_pulsar: v }))}
               />
               <FieldDate
                 label="Data Pagamento"
